@@ -2,11 +2,10 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 // Initializing the connection using the official SDK parameters to bypass Cloudflare structural limits
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai",
-  apiKey: process.env.OPENROUTER_API_KEY,
+const openai = new OpenAI({ 
+  apiKey: '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', 
+  baseURL: 'https://openrouter.ai/api/v1' 
 });
-
 
 export async function POST(req: Request) {
   try {
