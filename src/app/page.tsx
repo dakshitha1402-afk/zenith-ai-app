@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 interface Message {
   role: "user" | "assistant";
@@ -11,6 +11,16 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scrolls conversation container layout cleanly on new response events
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +39,6 @@ export default function Home() {
       });
 
       const data = await response.json();
-      
-      // If the backend threw an error, read the text message or fallback safely
       const aiResponseText = data.text || data.error || "Something went wrong. Please check backend logs.";
 
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponseText }]);
@@ -44,12 +52,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white font-sans">
-      {/* Top Header */}
       <header className="p-4 bg-gray-800 border-b border-gray-700 text-center font-bold text-xl tracking-wide text-cyan-400">
         ZenithAI Dashboard × Qwen Plus
       </header>
 
-      {/* Chat Display Container */}
       <main className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto pb-24">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 mt-20">
@@ -66,13 +72,12 @@ export default function Home() {
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm tracking-wide leading-relaxed shadow-md ${
                   msg.role === "user"
                     ? "bg-cyan-600 text-white rounded-tr-none"
-                    : "bg-gray-800 text-gray-100 border border-gray-700 rounded-tl-none chat-html-container"
+                    : "bg-gray-800 text-gray-100 border border-gray-700 rounded-tl-none"
                 }`}
               >
                 {msg.role === "user" ? (
                   <span className="whitespace-pre-wrap">{msg.content}</span>
                 ) : (
-                  /* --- LIVE NATIVE FIX: Interprets raw strings so the browser parses HTML tags --- */
                   <div dangerouslySetInnerHTML={{ __html: msg.content }} />
                 )}
               </div>
@@ -86,9 +91,9 @@ export default function Home() {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </main>
 
-      {/* Fixed Chat Input Form Area */}
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800">
         <form onSubmit={sendMessage} className="max-w-3xl mx-auto flex gap-2">
           <input
@@ -102,7 +107,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:hover:bg-cyan-600"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
           >
             Send
           </button>
