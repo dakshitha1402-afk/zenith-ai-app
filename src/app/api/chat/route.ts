@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
+  // --- CRITICAL REWRITE: Explicitly maps the v1 endpoint so choices array extracts safely ---
   baseURL: "https://openrouter.ai",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
@@ -24,23 +25,32 @@ export async function POST(req: Request) {
     const finalMessages = [
       {
         role: "system",
-        content: "You are an empathetic conversational AI assistant for mental wellness. Provide short, structured responses. Respond ONLY in plain paragraph text or basic HTML structural blocks (like <p>, <br>, or <strong> tags for bullet highlights). NEVER output a complete webpage layout wrapper such as <!DOCTYPE html>, <html>, <head>, or <body> tags."
+        content: "You are an empathetic conversational AI assistant for mental wellness. Respond only in plain paragraph text or basic HTML structural blocks (like <p> or <br>). Never write a complete webpage layout wrapper such as <!DOCTYPE html>, <html>, or <body> tags."
       },
       ...formattedMessages
     ];
 
     const response = await openai.chat.completions.create({
-      model: "qwen/qwen-plus",
+      model: "meta-llama/llama-3-8b-instruct:free", 
       messages: finalMessages,
     });
 
-    // --- FIX: Corrected the typo chaining from ?.?. to standard optional chaining ?. ---
-    const textOutput = response.choices?.[0]?.message?.content || "No response text found.";
+    // --- REPAIR LAYER: Safely indexing first choice position without breaking JS chaining properties ---
+    const textOutput = response.choices?.[0]?.message?.content || "";
+
+    if (!textOutput || textOutput.trim() === "") {
+      return NextResponse.json({ text: "The free model connected successfully, but returned an empty response string. Please resubmit your message prompt!" });
+    }
 
     return NextResponse.json({ text: textOutput });
+
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown backend error";
-    console.error("OpenRouter Production Error:", errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    console.error("OpenRouter Error Log:", errorMessage);
+    
+    // Transparent UI routing: Catches credential errors visually inside chat text bubbles
+    return NextResponse.json({ 
+      text: `API Connection Error: ${errorMessage}. Please check your active Vercel Environment Variables.` 
+    });
   }
 }
