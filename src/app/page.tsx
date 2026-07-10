@@ -13,7 +13,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scrolls conversation container layout cleanly on new response events
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -52,15 +51,16 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white font-sans">
+      {/* FIX: Header updated to accurately display Free AI Tier model */}
       <header className="p-4 bg-gray-800 border-b border-gray-700 text-center font-bold text-xl tracking-wide text-cyan-400">
-        ZenithAI Dashboard × Qwen Plus
+        ZenithAI Dashboard × Llama 3 Free
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto pb-24">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 mt-20">
             <p className="text-xl font-medium">Welcome to ZenithAI</p>
-            <p className="text-sm">Type a message below to start chatting with Qwen Plus!</p>
+            <p className="text-sm">Type a message below to start chatting with Llama 3!</p>
           </div>
         ) : (
           messages.map((msg, index) => (
@@ -75,11 +75,7 @@ export default function Home() {
                     : "bg-gray-800 text-gray-100 border border-gray-700 rounded-tl-none"
                 }`}
               >
-                {msg.role === "user" ? (
-                  <span className="whitespace-pre-wrap">{msg.content}</span>
-                ) : (
-                  <div dangerouslySetInnerHTML={{ __html: msg.content }} />
-                )}
+                <span className="whitespace-pre-wrap">{msg.content}</span>
               </div>
             </div>
           ))
@@ -87,7 +83,7 @@ export default function Home() {
         {loading && (
           <div className="flex justify-start">
             <div className="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-cyan-400 animate-pulse">
-              Qwen is thinking...
+              ZenithAI is thinking...
             </div>
           </div>
         )}
@@ -100,7 +96,7 @@ export default function Home() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Qwen anything..."
+            placeholder="Ask anything..."
             disabled={loading}
             className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 disabled:opacity-50"
           />
