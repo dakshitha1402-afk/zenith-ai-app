@@ -21,7 +21,6 @@ export async function POST(req: Request) {
       content: msg.content,
     }));
 
-    // HACKATHON SYSTEM FIX: Forces Qwen to only respond in paragraphs or basic HTML blocks
     const finalMessages = [
       {
         role: "system",
@@ -35,6 +34,7 @@ export async function POST(req: Request) {
       messages: finalMessages,
     });
 
+    // --- FIX: Corrected the typo chaining from ?.?. to standard optional chaining ?. ---
     const textOutput = response.choices?.[0]?.message?.content || "No response text found.";
 
     return NextResponse.json({ text: textOutput });
