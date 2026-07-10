@@ -3,9 +3,9 @@ export const runtime = "edge";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// --- FIX: Safely fallback to an empty string during build compilation so Vercel doesn't crash ---
+// --- FIX 1: Provide the exact full URL path required by the OpenRouter client wrapper ---
 const openai = new OpenAI({
-  baseURL: "https://openrouter.ai",
+  baseURL: "https://openrouter.ai", 
   apiKey: process.env.OPENROUTER_API_KEY || "dummy_build_key",
 });
 
@@ -13,7 +13,9 @@ export async function POST(req: Request) {
   try {
     // Safety check if the real key is missing during live runtime execution
     if (!process.env.OPENROUTER_API_KEY) {
-      return NextResponse.json({ text: "API Connection Error: Your OPENROUTER_API_KEY variable is not added to your Vercel project settings yet!" });
+      return NextResponse.json({ 
+        text: "API Connection Error: Your OPENROUTER_API_KEY variable is not added to your Vercel project settings yet!" 
+      });
     }
 
     const { messages } = await req.json();
@@ -35,15 +37,22 @@ export async function POST(req: Request) {
       ...formattedMessages
     ];
 
+    // --- FIX 2: Added required extra_headers to avoid anonymous request drops on free tiers ---
     const response = await openai.chat.completions.create({
       model: "meta-llama/llama-3-8b-instruct:free", 
       messages: finalMessages,
+      extra_headers: {
+        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000",
+        "X-Title": "ZenithAI Dashboard",
+      }
     });
 
     const textOutput = response.choices?.[0]?.message?.content || "";
 
     if (!textOutput || textOutput.trim() === "") {
-      return NextResponse.json({ text: "The model connected successfully, but returned an empty response string. Please resubmit your message!" });
+      return NextResponse.json({ 
+        text: "The model connected successfully, but returned an empty response string. Please resubmit your message!" 
+      });
     }
 
     return NextResponse.json({ text: textOutput });
