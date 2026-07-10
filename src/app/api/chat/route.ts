@@ -12,21 +12,31 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    // Cleanly map the incoming array for OpenRouter consistency
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json({ error: "Invalid messages array provided" }, { status: 400 });
+    }
+
     const formattedMessages = messages.map((msg: { role: string; content: string }) => ({
       role: msg.role || "user",
       content: msg.content,
     }));
 
+    // HACKATHON SYSTEM FIX: Forces Qwen to only respond in paragraphs or basic HTML blocks
+    const finalMessages = [
+      {
+        role: "system",
+        content: "You are an empathetic conversational AI assistant for mental wellness. Provide short, structured responses. Respond ONLY in plain paragraph text or basic HTML structural blocks (like <p>, <br>, or <strong> tags for bullet highlights). NEVER output a complete webpage layout wrapper such as <!DOCTYPE html>, <html>, <head>, or <body> tags."
+      },
+      ...formattedMessages
+    ];
+
     const response = await openai.chat.completions.create({
       model: "qwen/qwen-plus",
-      messages: formattedMessages,
+      messages: finalMessages,
     });
 
-    // Safely extract content and provide a fallback string
     const textOutput = response.choices?.[0]?.message?.content || "No response text found.";
 
-    // Return as a clean JSON structure that your frontend can easily grab
     return NextResponse.json({ text: textOutput });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown backend error";
