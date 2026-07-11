@@ -35,9 +35,9 @@ export async function POST(req: Request) {
       ...formattedMessages
     ];
 
-    // Requesting the completion with a strict 30-second timeout configuration safely handled by Edge
+    // UPDATED: Using the official OpenRouter multi-model free tier auto-router slug
     const response = await openai.chat.completions.create({
-      model: "meta-llama/llama-3-8b-instruct:free", 
+      model: "openrouter/free", 
       messages: finalMessages as any,
       extra_headers: {
         "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000",
@@ -45,8 +45,6 @@ export async function POST(req: Request) {
       }
     });
 
-    // ROBUST PARSING: OpenRouter free tier payloads sometimes structure choices uniquely.
-    // This safely extracts text from any valid path without ever throwing an exception.
     let textOutput = "";
     if (response && response.choices && response.choices[0]) {
       const firstChoice = response.choices[0] as any;
@@ -59,7 +57,7 @@ export async function POST(req: Request) {
 
     if (!textOutput || textOutput.trim() === "") {
       return NextResponse.json({ 
-        text: "OpenRouter's free tier is currently congested and returned an empty response. Please wait a few seconds and try resubmitting your message!" 
+        text: "All free models are currently facing temporary high traffic loads. Please wait a moment and click Send again!" 
       });
     }
 
