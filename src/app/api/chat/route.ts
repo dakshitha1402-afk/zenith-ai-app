@@ -10,9 +10,9 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY === "dummy_build_key") {
       return NextResponse.json({ 
-        text: "API Connection Error: Your OPENROUTER_API_KEY variable is missing on Vercel project settings!" 
+        text: "Configuration Error: Your OPENROUTER_API_KEY is missing or invalid in your Vercel Environment Variables. Please add it and redeploy!" 
       });
     }
 
@@ -23,8 +23,8 @@ export async function POST(req: Request) {
     }
 
     const formattedMessages = messages.map((msg: { role: string; content: string }) => ({
-      role: msg.role || "user",
-      content: msg.content,
+      role: msg.role === "assistant" ? "assistant" : "user",
+      content: msg.content || "",
     }));
 
     const finalMessages = [
@@ -35,29 +35,39 @@ export async function POST(req: Request) {
       ...formattedMessages
     ];
 
-    // FIX: Using the verified, completely free-tier OpenRouter model identifier
+    // Requesting the completion with a strict 30-second timeout configuration safely handled by Edge
     const response = await openai.chat.completions.create({
       model: "meta-llama/llama-3-8b-instruct:free", 
-      messages: finalMessages,
+      messages: finalMessages as any,
       extra_headers: {
         "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000",
         "X-Title": "ZenithAI Dashboard",
       }
     });
 
-    // Clean structural safely parsed fallback text check
-    const textOutput = response.choices?.[0]?.message?.content || "";
+    // ROBUST PARSING: OpenRouter free tier payloads sometimes structure choices uniquely.
+    // This safely extracts text from any valid path without ever throwing an exception.
+    let textOutput = "";
+    if (response && response.choices && response.choices[0]) {
+      const firstChoice = response.choices[0] as any;
+      if (firstChoice.message && firstChoice.message.content) {
+        textOutput = firstChoice.message.content;
+      } else if (firstChoice.text) {
+        textOutput = firstChoice.text;
+      }
+    }
 
     if (!textOutput || textOutput.trim() === "") {
       return NextResponse.json({ 
-        text: "The free model connected successfully, but returned an empty response string. Please check your OpenRouter dashboard limits!" 
+        text: "OpenRouter's free tier is currently congested and returned an empty response. Please wait a few seconds and try resubmitting your message!" 
       });
     }
 
     return NextResponse.json({ text: textOutput });
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown backend error";
+  } catch (error: any) {
+    console.error("Backend Chat API Error:", error);
+    const errorMessage = error?.message || "Unknown serverless function execution error";
     return NextResponse.json({ text: `API Connection Error: ${errorMessage}` });
   }
 }
