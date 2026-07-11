@@ -37,13 +37,20 @@ export default function Home() {
         body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 
+      if (!response.ok) {
+        throw new Error(`Server responded with status code: ${response.status}`);
+      }
+
       const data = await response.json();
-      const aiResponseText = data.text || data.error || "Something went wrong. Please check backend logs.";
+      
+      // Strict extraction sequence ensuring the UI always gets a clean string display
+      const aiResponseText = data.text || data.error || "The server returned an unrecognizable data structure. Please check your route formatting.";
 
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponseText }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Frontend Connection Error:", err);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Failed to connect to server." }]);
+      const displayErr = err?.message || "Failed to reach the server function.";
+      setMessages((prev) => [...prev, { role: "assistant", content: `Connection Mismatch: ${displayErr}` }]);
     } finally {
       setLoading(false);
     }
@@ -51,7 +58,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white font-sans">
-      {/* FIX: Header updated to accurately display Free AI Tier model */}
       <header className="p-4 bg-gray-800 border-b border-gray-700 text-center font-bold text-xl tracking-wide text-cyan-400">
         ZenithAI Dashboard × Llama 3 Free
       </header>
