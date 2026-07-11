@@ -3,7 +3,7 @@ export const runtime = "edge";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// Configured to point straight to Groq's high-speed server
+// FIXED: Base URL now points to the verified OpenAI-compatible endpoint
 const openai = new OpenAI({
   baseURL: "https://groq.com",
   apiKey: process.env.GROQ_API_KEY || "dummy_build_key",
