@@ -3,16 +3,17 @@ export const runtime = "edge";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// Configured to point straight to Groq's high-speed server
 const openai = new OpenAI({
-  baseURL: "https://openrouter.ai",
-  apiKey: process.env.OPENROUTER_API_KEY || "dummy_build_key",
+  baseURL: "https://groq.com",
+  apiKey: process.env.GROQ_API_KEY || "dummy_build_key",
 });
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY === "dummy_build_key") {
+    if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === "dummy_build_key") {
       return NextResponse.json({ 
-        text: "Configuration Error: Your OPENROUTER_API_KEY is missing or invalid in your Vercel Environment Variables. Please add it and redeploy!" 
+        text: "Configuration Error: Your GROQ_API_KEY variable is missing on Vercel project settings!" 
       });
     }
 
@@ -35,29 +36,17 @@ export async function POST(req: Request) {
       ...formattedMessages
     ];
 
-    // UPDATED: Using the official OpenRouter multi-model free tier auto-router slug
+    // Using Groq's highly stable Llama 3 8B model
     const response = await openai.chat.completions.create({
-      model: "openrouter/free", 
+      model: "llama3-8b-8192", 
       messages: finalMessages as any,
-      extra_headers: {
-        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000",
-        "X-Title": "ZenithAI Dashboard",
-      }
     });
 
-    let textOutput = "";
-    if (response && response.choices && response.choices[0]) {
-      const firstChoice = response.choices[0] as any;
-      if (firstChoice.message && firstChoice.message.content) {
-        textOutput = firstChoice.message.content;
-      } else if (firstChoice.text) {
-        textOutput = firstChoice.text;
-      }
-    }
+    const textOutput = response.choices?.[0]?.message?.content || "";
 
     if (!textOutput || textOutput.trim() === "") {
       return NextResponse.json({ 
-        text: "All free models are currently facing temporary high traffic loads. Please wait a moment and click Send again!" 
+        text: "The model connected, but returned an empty response string." 
       });
     }
 
