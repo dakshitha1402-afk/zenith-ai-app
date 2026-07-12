@@ -14,7 +14,9 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   };
 
   useEffect(() => {
@@ -23,9 +25,14 @@ export default function Home() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!input.trim() || loading) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = {
+      role: "user",
+      content: input,
+    };
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -33,24 +40,47 @@ export default function Home() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Server responded with status code: ${response.status}`);
+        throw new Error(
+          Server responded with status code: ${response.status}
+        );
       }
 
       const data = await response.json();
-      
-      // Strict extraction sequence ensuring the UI always gets a clean string display
-      const aiResponseText = data.text || data.error || "The server returned an unrecognizable data structure. Please check your route formatting.";
 
-      setMessages((prev) => [...prev, { role: "assistant", content: aiResponseText }]);
+      const aiResponseText =
+        data.text ||
+        data.error ||
+        "The server returned an unexpected response.";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: aiResponseText,
+        },
+      ]);
     } catch (err: any) {
       console.error("Frontend Connection Error:", err);
-      const displayErr = err?.message || "Failed to reach the server function.";
-      setMessages((prev) => [...prev, { role: "assistant", content: `Connection Mismatch: ${displayErr}` }]);
+
+      const displayErr =
+        err?.message || "Failed to reach the server.";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: ⚠️ Connection Error: ${displayErr},
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -58,58 +88,87 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white font-sans">
-      <header className="p-4 bg-gray-800 border-b border-gray-700 text-center font-bold text-xl tracking-wide text-cyan-400">
-        ZenithAI Dashboard × Llama 3 Free
+
+      {/* Header */}
+      <header className="p-4 bg-gray-800 border-b border-gray-700 text-center font-bold text-2xl tracking-wide text-cyan-400 shadow-md">
+        🌱 Zenith AI
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto pb-24">
+      {/* Chat Area */}
+      <main className="flex-1 overflow-y-auto p-4 space-y-5 max-w-4xl w-full mx-auto pb-28">
+
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 mt-20">
-            <p className="text-xl font-medium">Welcome to ZenithAI</p>
-            <p className="text-sm">Type a message below to start chatting with Llama 3!</p>
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-6">
+
+            <h1 className="text-3xl font-bold text-cyan-400 mb-4">
+              Welcome to Zenith AI 🌱
+            </h1>
+
+            <p className="text-lg leading-8 max-w-lg">
+              A place for reflection, conversation, self-awareness and support.
+            </p>
+
+            <p className="mt-6 text-sm text-gray-500">
+              Share your thoughts, ask questions or simply talk.
+            </p>
+
           </div>
         ) : (
           messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                msg.role === "user"
+                  ? "justify-end"
+                  : "justify-start"
+              }`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm tracking-wide leading-relaxed shadow-md ${
+                className={`max-w-[90%] rounded-3xl px-5 py-4 text-base leading-8 shadow-lg transition-all duration-300 ${
                   msg.role === "user"
                     ? "bg-cyan-600 text-white rounded-tr-none"
                     : "bg-gray-800 text-gray-100 border border-gray-700 rounded-tl-none"
                 }`}
               >
-                <span className="whitespace-pre-wrap">{msg.content}</span>
+                <div className="whitespace-pre-wrap break-words">
+                  {msg.content}
+                </div>
               </div>
             </div>
           ))
         )}
+
+        {/* Loading Indicator */}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-cyan-400 animate-pulse">
-              ZenithAI is thinking...
+            <div className="bg-gray-800 border border-gray-700 rounded-3xl rounded-tl-none px-5 py-4 text-base text-cyan-400 animate-pulse shadow-lg">
+              🌱 Zenith AI is thinking...
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800">
-        <form onSubmit={sendMessage} className="max-w-3xl mx-auto flex gap-2">
+      {/* Input Area */}
+      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 backdrop-blur-md">
+        <form
+          onSubmit={sendMessage}
+          className="max-w-4xl mx-auto flex gap-3"
+        >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything..."
+            placeholder="Share what's on your mind..."
             disabled={loading}
-            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 disabled:opacity-50"
+            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-cyan-500 disabled:opacity-50"
           />
+
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-4 rounded-2xl text-base font-medium transition-all duration-200 disabled:opacity-50"
           >
             Send
           </button>
