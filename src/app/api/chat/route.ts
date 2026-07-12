@@ -38,10 +38,10 @@ export async function POST(req: Request) {
     ];
 
     // Using Groq's highly stable Llama 3 8B model
-    const response = await openai.chat.completions.create({
-      model: "llama3-8b-8192", 
-      messages: finalMessages as any,
-    });
+   const response = await openai.chat.completions.create({
+  model: "llama-3.1-8b-instant",
+  messages: finalMessages as any,
+});
 
     const textOutput = response.choices?.[0]?.message?.content || "";
 
