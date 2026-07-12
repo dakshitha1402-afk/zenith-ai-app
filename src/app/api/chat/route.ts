@@ -5,8 +5,9 @@ import OpenAI from "openai";
 
 // FIXED: Base URL now points to the verified OpenAI-compatible endpoint
 const openai = new OpenAI({
-  baseURL: "https://groq.com",
-  apiKey: process.env.GROQ_API_KEY || "dummy_build_key",
+  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY,
+
 });
 
 export async function POST(req: Request) {
