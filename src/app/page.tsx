@@ -50,7 +50,7 @@ export default function Home() {
 
       if (!response.ok) {
         throw new Error(
-          Server responded with status code: ${response.status}
+          `Server responded with status code: ${response.status}`
         );
       }
 
@@ -78,7 +78,7 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content: ⚠️ Connection Error: ${displayErr},
+          content: `⚠️ Connection Error: ${displayErr}`,
         },
       ]);
     } finally {
