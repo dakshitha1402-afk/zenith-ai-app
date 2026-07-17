@@ -3,60 +3,63 @@ export const runtime = "edge";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// FIXED: Base URL now points to the verified OpenAI-compatible endpoint
-
-
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
-}); 
+});
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === "dummy_build_key") {
-      return NextResponse.json({ 
-        text: "Configuration Error: Your GROQ_API_KEY variable is missing on Vercel project settings!" 
-      });
+    // Verify API key exists
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        {
+          text: "Configuration Error: GROQ_API_KEY is missing in Vercel Environment Variables.",
+        },
+        { status: 500 }
+      );
     }
 
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Invalid messages array provided" }, { status: 400 });
+      return NextResponse.json(
+        {
+          text: "Invalid request: messages array required.",
+        },
+        { status: 400 }
+      );
     }
 
-    const formattedMessages = messages.map((msg: { role: string; content: string }) => ({
-      role: msg.role === "assistant" ? "assistant" : "user",
-      content: msg.content || "",
-    }));
+    const completion = await client.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are ZenithAI, an empathetic conversational AI assistant for mental wellness. Respond naturally in plain text without markdown formatting unless explicitly requested.",
+        },
+        ...messages,
+      ],
+    });
 
-    const finalMessages = [
-      {
-        role: "system",
-        content: "You are an empathetic conversational AI assistant for mental wellness. Respond only in plain paragraph text."
-      },
-      ...formattedMessages
-    ];
+    const responseText =
+      completion.choices?.[0]?.message?.content ||
+      "I couldn't generate a response.";
 
-    // Using Groq's highly stable Llama 3 8B model
-   const response = await openai.chat.completions.create({
-  model: "llama-3.1-8b-instant",
-  messages: finalMessages as any,
-});
-
-    const textOutput = response.choices?.[0]?.message?.content || "";
-
-    if (!textOutput || textOutput.trim() === "") {
-      return NextResponse.json({ 
-        text: "The model connected, but returned an empty response string." 
-      });
-    }
-
-    return NextResponse.json({ text: textOutput });
-
+    return NextResponse.json({
+      text: responseText,
+    });
   } catch (error: any) {
-    console.error("Backend Chat API Error:", error);
-    const errorMessage = error?.message || "Unknown serverless function execution error";
-    return NextResponse.json({ text: `API Connection Error: ${errorMessage}` });
+    console.error("Groq API Error:", error);
+
+    return NextResponse.json(
+      {
+        text: `API Connection Error: ${
+          error?.message || "Unknown error"
+        }`,
+      },
+      { status: 500 }
+    );
   }
 }
