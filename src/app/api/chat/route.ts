@@ -4,11 +4,12 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 // FIXED: Base URL now points to the verified OpenAI-compatible endpoint
-const openai = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY,
 
-});
+
+const client = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+}); 
 
 export async function POST(req: Request) {
   try {
