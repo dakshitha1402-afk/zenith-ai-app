@@ -11,14 +11,18 @@ export default function Pet() {
     y: 200,
   });
 
-  const [target, setTarget] = useState(position);
+  const [target, setTarget] = useState({
+    x: 100,
+    y: 200,
+  });
+
   const [message, setMessage] = useState("");
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [dragging, setDragging] = useState(false);
 
-  // Mouse follow
+  // Follow mouse and finger
   useEffect(() => {
-    const mouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (dragging) return;
 
       setTarget({
@@ -27,7 +31,7 @@ export default function Pet() {
       });
     };
 
-    const touchMove = (e: TouchEvent) => {
+    const handleTouchMove = (e: TouchEvent) => {
       if (dragging || e.touches.length === 0) return;
 
       setTarget({
@@ -36,16 +40,16 @@ export default function Pet() {
       });
     };
 
-    window.addEventListener("mousemove", mouseMove);
-    window.addEventListener("touchmove", touchMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove);
 
     return () => {
-      window.removeEventListener("mousemove", mouseMove);
-      window.removeEventListener("touchmove", touchMove);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, [dragging]);
 
-  // Smooth walking
+  // Smooth movement
   useEffect(() => {
     const interval = setInterval(() => {
       if (dragging) return;
@@ -57,7 +61,7 @@ export default function Pet() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         // Stop when close enough
-        if (distance < 20) {
+        if (distance < 150) {
           return prev;
         }
 
@@ -82,7 +86,7 @@ export default function Pet() {
     return () => clearInterval(interval);
   }, [target, dragging]);
 
-  // Random wandering
+  // Random wandering every 15 seconds
   useEffect(() => {
     const wander = setInterval(() => {
       if (dragging) return;
@@ -97,20 +101,22 @@ export default function Pet() {
   }, [dragging]);
 
   const handleTap = () => {
-    const msgs = [
+    const messages = [
       "Hello! 👋",
       "I'm Zenith Fox 🦊",
       "Thanks for the pet ❤️",
       "Let's build something!",
       "Following you 👀",
-      "This app is awesome 🚀",
+      "Zenith AI is awesome 🚀",
     ];
 
     setMessage(
-      msgs[Math.floor(Math.random() * msgs.length)]
+      messages[Math.floor(Math.random() * messages.length)]
     );
 
-    setTimeout(() => setMessage(""), 2000);
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
   };
 
   return (
@@ -127,6 +133,7 @@ export default function Pet() {
             borderRadius: "12px",
             zIndex: 10000,
             pointerEvents: "none",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
           }}
         >
           {message}
@@ -140,24 +147,38 @@ export default function Pet() {
         onDragEnd={(event, info) => {
           setDragging(false);
 
-          const x = Math.max(
+          const newX = Math.max(
             0,
-            Math.min(window.innerWidth - PET_SIZE, info.point.x)
+            Math.min(
+              window.innerWidth - PET_SIZE,
+              position.x + info.offset.x
+            )
           );
 
-          const y = Math.max(
+          const newY = Math.max(
             0,
-            Math.min(window.innerHeight - PET_SIZE, info.point.y)
+            Math.min(
+              window.innerHeight - PET_SIZE,
+              position.y + info.offset.y
+            )
           );
 
-          setPosition({ x, y });
-          setTarget({ x, y });
+          setPosition({
+            x: newX,
+            y: newY,
+          });
+
+          setTarget({
+            x: newX,
+            y: newY,
+          });
         }}
         onTap={handleTap}
         animate={{
           x: position.x,
           y: position.y,
           scale: dragging ? 1.1 : 1,
+          scaleX: direction === "left" ? -1 : 1,
         }}
         transition={{
           type: "spring",
@@ -166,15 +187,13 @@ export default function Pet() {
         }}
         style={{
           position: "fixed",
+          left: 0,
+          top: 0,
           zIndex: 9999,
           fontSize: "60px",
           cursor: dragging ? "grabbing" : "grab",
           userSelect: "none",
           touchAction: "none",
-          transform:
-            direction === "left"
-              ? "scaleX(-1)"
-              : "scaleX(1)",
         }}
       >
         🦊
