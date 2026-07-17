@@ -1,23 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import Pet from "@/components/pet/Pet";
 
 export const metadata: Metadata = {
-  title: "ZenithAI Dashboard",
-  description: "Qwen Plus Cloud AI Assistant",
+  title: "ZenithAI",
+  description: "AI-powered clarity for the modern mind",
 };
 
-export interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: Readonly<{
   children: React.ReactNode;
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         {children}
+        <Pet />
       </body>
     </html>
   );
