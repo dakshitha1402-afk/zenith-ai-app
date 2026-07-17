@@ -13,7 +13,7 @@ export default function Pet() {
 
   const [message, setMessage] = useState("");
 
-  // Follow mouse on desktop
+  // Follow mouse on deskto
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setPosition((prev) => ({
