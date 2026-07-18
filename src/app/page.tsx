@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { usePet } from "@/context/PetContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,6 +13,8 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { showPetMessage } = usePet();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -28,6 +31,38 @@ export default function Home() {
 
     if (!input.trim() || loading) return;
 
+    const text = input.toLowerCase();
+
+    // Fox reacts to user emotion
+    if (
+      text.includes("sad") ||
+      text.includes("cry") ||
+      text.includes("depressed") ||
+      text.includes("lonely")
+    ) {
+      showPetMessage("I'm here for you ❤️");
+    } else if (
+      text.includes("happy") ||
+      text.includes("great") ||
+      text.includes("awesome") ||
+      text.includes("excited")
+    ) {
+      showPetMessage("Yay! That's amazing! 🎉");
+    } else if (
+      text.includes("stress") ||
+      text.includes("stressed") ||
+      text.includes("anxiety") ||
+      text.includes("worried")
+    ) {
+      showPetMessage("We'll get through this together 🌱");
+    } else if (
+      text.includes("thank")
+    ) {
+      showPetMessage("You're always welcome 😊");
+    } else {
+      showPetMessage("Hmm... Let me think 🤔");
+    }
+
     const userMessage: Message = {
       role: "user",
       content: input,
@@ -38,6 +73,9 @@ export default function Home() {
     setLoading(true);
 
     try {
+      // Thinking
+      showPetMessage("Thinking... 🤔");
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -68,6 +106,14 @@ export default function Home() {
           content: aiResponseText,
         },
       ]);
+
+      // Fox after response
+      showPetMessage("I hope this helps 😊");
+
+      setTimeout(() => {
+        showPetMessage("Anything else you'd like to talk about?");
+      }, 3500);
+
     } catch (err: any) {
       console.error("Frontend Connection Error:", err);
 
@@ -81,6 +127,8 @@ export default function Home() {
           content: `⚠️ Connection Error: ${displayErr}`,
         },
       ]);
+
+      showPetMessage("Oops... something went wrong 😥");
     } finally {
       setLoading(false);
     }
@@ -138,7 +186,6 @@ export default function Home() {
           ))
         )}
 
-        {/* Loading Indicator */}
         {loading && (
           <div className="flex justify-start">
             <div className="bg-gray-800 border border-gray-700 rounded-3xl rounded-tl-none px-5 py-4 text-base text-cyan-400 animate-pulse shadow-lg">
@@ -150,7 +197,7 @@ export default function Home() {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Input Area */}
+      {/* Input */}
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 backdrop-blur-md">
         <form
           onSubmit={sendMessage}
@@ -174,6 +221,7 @@ export default function Home() {
           </button>
         </form>
       </footer>
+
     </div>
   );
 }
