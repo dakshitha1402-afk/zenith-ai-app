@@ -2,10 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { usePet } from "@/context/PetContext";
 
 const PET_SIZE = 70;
 
 export default function Pet() {
+  const { petMessage, showPetMessage } = usePet();
+
   const [position, setPosition] = useState({
     x: 100,
     y: 200,
@@ -16,11 +19,10 @@ export default function Pet() {
     y: 200,
   });
 
-  const [message, setMessage] = useState("");
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [dragging, setDragging] = useState(false);
 
-  // Follow mouse and finger
+  // Follow mouse
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (dragging) return;
@@ -32,7 +34,8 @@ export default function Pet() {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (dragging || e.touches.length === 0) return;
+      if (dragging) return;
+      if (e.touches.length === 0) return;
 
       setTarget({
         x: e.touches[0].clientX - PET_SIZE / 2,
@@ -60,13 +63,12 @@ export default function Pet() {
 
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Stop when close enough
-        if (distance < 150) {
+        if (distance < 10) {
           return prev;
         }
 
-        const newX = prev.x + dx * 0.05;
-        const newY = prev.y + dy * 0.05;
+        const newX = prev.x + dx * 0.08;
+        const newY = prev.y + dy * 0.08;
 
         setDirection(dx > 0 ? "right" : "left");
 
@@ -86,7 +88,7 @@ export default function Pet() {
     return () => clearInterval(interval);
   }, [target, dragging]);
 
-  // Random wandering every 15 seconds
+  // Wander every 15 sec
   useEffect(() => {
     const wander = setInterval(() => {
       if (dragging) return;
@@ -101,7 +103,7 @@ export default function Pet() {
   }, [dragging]);
 
   const handleTap = () => {
-    const messages = [
+    const msgs = [
       "Hello! 👋",
       "I'm Zenith Fox 🦊",
       "Thanks for the pet ❤️",
@@ -110,34 +112,36 @@ export default function Pet() {
       "Zenith AI is awesome 🚀",
     ];
 
-    setMessage(
-      messages[Math.floor(Math.random() * messages.length)]
+    showPetMessage(
+      msgs[Math.floor(Math.random() * msgs.length)]
     );
-
-    setTimeout(() => {
-      setMessage("");
-    }, 2000);
   };
 
   return (
     <>
-      {message && (
-        <div
+      {petMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
           style={{
             position: "fixed",
             left: position.x + 20,
-            top: position.y - 50,
+            top: position.y - 55,
             background: "white",
             color: "black",
-            padding: "8px 12px",
-            borderRadius: "12px",
+            padding: "8px 14px",
+            borderRadius: "14px",
+            fontSize: "14px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
             zIndex: 10000,
             pointerEvents: "none",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            maxWidth: "220px",
+            textAlign: "center",
           }}
         >
-          {message}
-        </div>
+          {petMessage}
+        </motion.div>
       )}
 
       <motion.div
