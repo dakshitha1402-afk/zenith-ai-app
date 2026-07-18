@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 import Pet from "@/components/pet/Pet";
+import { PetProvider } from "@/context/PetContext";
 
 export const metadata: Metadata = {
   title: "ZenithAI",
@@ -15,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        <Pet />
+        <PetProvider>
+          {children}
+          <Pet />
+        </PetProvider>
       </body>
     </html>
   );
